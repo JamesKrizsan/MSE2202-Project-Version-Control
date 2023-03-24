@@ -1,0 +1,63 @@
+#define trigF 5
+#define echoF 4
+// Defines the number of steps per rotation
+const int stepsPerRevolution = 2038;
+
+int step = 0;
+
+
+void setup() {
+
+//pins from left to right
+  pinMode(21, OUTPUT);
+  pinMode(47, OUTPUT);
+  pinMode(48, OUTPUT);
+  pinMode(45, OUTPUT);
+  pinMode(35, OUTPUT);
+  pinMode(36, OUTPUT);
+  pinMode(37, OUTPUT);
+  pinMode(38, OUTPUT);
+  pinMode(39, OUTPUT);
+  pinMode(40, OUTPUT);
+  pinMode(41, OUTPUT); //drive forward
+  pinMode(42, OUTPUT); //drive backwards
+  pinMode(2, OUTPUT); //rear motor up
+  pinMode(1, OUTPUT); //rear motor down
+}
+
+
+void loop() {
+
+  switch(step){
+
+//move to edge and stop
+case 0:
+   // Clears the trigPin
+      digitalWrite(trigF, LOW);
+      delayMicroseconds(2);
+      // Sets the trigPin on HIGH state for 10 micro seconds
+      digitalWrite(trigF, HIGH);
+      delayMicroseconds(10);
+      digitalWrite(trigF, LOW);
+      // Reads the echoPin, returns the sound wave travel time in microseconds
+      duration = pulseIn(echoF, HIGH);
+      // Calculating the distance
+      distance= duration*0.034/2;
+      Serial.println(distance);
+
+      if(distance <= 5){
+        digitalWrite(41, HIGH);
+      }
+
+      if (distance >= 5){
+        step = 1;
+      }
+      break;
+
+      //stepper move front arm
+      case 1:
+
+      break;
+  }
+
+}
