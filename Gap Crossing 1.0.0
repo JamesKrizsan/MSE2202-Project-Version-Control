@@ -1,37 +1,49 @@
-#define trigF 5
-#define echoF 4
-// Defines the number of steps per rotation
-const int stepsPerRevolution = 2038;
+#include <Adafruit_NeoPixel.h>
 
-int step = 0;
+#define trigF 5 //orange
+#define echoF 4 //yellow
+#define trigB 7
+#define echoB 6
+
+Adafruit_NeoPixel SmartLEDs(1, 21, NEO_RGB + NEO_KHZ800);
+const int stepsPerRevolution = 2038;
+int step;
+int LEDstep;
+int duration;
+int distance;
 
 
 void setup() {
+  step = 0;
+  LEDstep = 0;
 
 //pins from left to right
-  pinMode(21, OUTPUT);
-  pinMode(47, OUTPUT);
-  pinMode(48, OUTPUT);
-  pinMode(45, OUTPUT);
-  pinMode(35, OUTPUT);
-  pinMode(36, OUTPUT);
-  pinMode(37, OUTPUT);
-  pinMode(38, OUTPUT);
-  pinMode(39, OUTPUT);
-  pinMode(40, OUTPUT);
-  pinMode(41, OUTPUT); //drive forward
-  pinMode(42, OUTPUT); //drive backwards
-  pinMode(2, OUTPUT); //rear motor up
-  pinMode(1, OUTPUT); //rear motor down
+  pinMode(21, OUTPUT); //left forwards (yellow, top of driver)
+  pinMode(47, OUTPUT); //left backwards (light orange)
+  pinMode(48, OUTPUT); //right forwards (dark orange)
+  pinMode(45, OUTPUT); //right backwards (black, bottom of driver)
+  pinMode(35, OUTPUT); //rear arm extend (red)
+  pinMode(36, OUTPUT); //rear arm retract (brown)
+  pinMode(37, OUTPUT); //track forwards
+  pinMode(38, OUTPUT); //track backwards
+  pinMode(39, OUTPUT);    //lock?
+  pinMode(40, OUTPUT);    //unlock?
+  pinMode(41, OUTPUT); //front arm down
+  pinMode(42, OUTPUT); //front arm up
+  pinMode(2, OUTPUT);  //front arm extend
+  pinMode(1, OUTPUT);  //front arm retract
+  pinMode(trigF, OUTPUT); //Sets the trigPin as an Output
+  pinMode(echoF, INPUT); //Sets the echoPin as an Input
+  pinMode(trigB, OUTPUT); //Sets the trigPin as an Output
+  pinMode(echoB, INPUT); //Sets the echoPin as an Input
 }
 
-
 void loop() {
-
+  
   switch(step){
 
 //move to edge and stop
-case 0:
+case 0:    
    // Clears the trigPin
       digitalWrite(trigF, LOW);
       delayMicroseconds(2);
@@ -45,19 +57,188 @@ case 0:
       distance= duration*0.034/2;
       Serial.println(distance);
 
-      if(distance <= 5){
-        digitalWrite(41, HIGH);
-      }
+        digitalWrite(21, HIGH);
+        digitalWrite(48, HIGH);
 
       if (distance >= 5){
+        digitalWrite(21, LOW);
+        digitalWrite(48, LOW);
         step = 1;
       }
       break;
 
-      //stepper move front arm
+      //extend front arm
       case 1:
+      digitalWrite(2, HIGH);
+      delay(1); //need to time extending time
+      digitalWrite(2, LOW);
+      step = 2;
+      break;
 
+      //rotate front arm to table
+      case 2:
+      digitalWrite(41, HIGH);
+      delay(1); //need to time
+      digitalWrite(41, LOW);
+      step = 3;
+      break;
+
+      //extend back wheels
+      case 3:
+      digitalWrite(35, HIGH);
+      delay(4000);
+      digitalWrite(35, LOW);
+      step = 4;
+      break;
+
+      //front arm pull
+      case 4:
+      digitalWrite(trigB, LOW);
+      delayMicroseconds(2);
+      // Sets the trigPin on HIGH state for 10 micro seconds
+      digitalWrite(trigB, HIGH);
+      delayMicroseconds(10);
+      digitalWrite(trigB, LOW);
+      // Reads the echoPin, returns the sound wave travel time in microseconds
+      duration = pulseIn(echoB, HIGH);
+      // Calculating the distance
+      distance= duration*0.034/2;
+      Serial.println(distance);
+
+
+      digitalWrite(37, HIGH);
+      if(distance <= 5){
+        digitalWrite(37, LOW);
+      step = 5;
+      }
+      break;
+
+      //pull back wheels up      
+      case 5:
+      digitalWrite(36, HIGH);
+      delay(4000);
+      digitalWrite(36, LOW);
+      step = 6;
+      break;
+
+      //retract front arm
+      case 6:
+      digitalWrite(1, HIGH);
+      delay(1); //need to time extending time
+      digitalWrite(1, LOW);
+      step = 7;
+      break;
+
+      //arm rotate back to stating position
+      case 7:
+      digitalWrite(42, HIGH);
+      delay(1); //need to time
+      digitalWrite(42, LOW);
+      step = 8;
+      break;
+
+      //drive forwards till edge
+      case 8:
+      digitalWrite(trigF, LOW);
+      delayMicroseconds(2);
+      // Sets the trigPin on HIGH state for 10 micro seconds
+      digitalWrite(trigF, HIGH);
+      delayMicroseconds(10);
+      digitalWrite(trigF, LOW);
+      // Reads the echoPin, returns the sound wave travel time in microseconds
+      duration = pulseIn(echoF, HIGH);
+      // Calculating the distance
+      distance= duration*0.034/2;
+      Serial.println(distance);
+
+      if(distance <= 5){
+        digitalWrite(48, HIGH);
+      }
+
+      if (distance >= 5){
+        digitalWrite(48, LOW);
+        step = 9;
+      }
+      break;
+
+      //drive backwards
+      case 9:
+      digitalWrite(45, HIGH);
+      delay(1); //need to time
+      digitalWrite(45, LOW);
+      step = 10;
+      break;
+
+      //flash led
+      case 10:
+      switch(LEDstep)
+        {
+          case 0:
+          {
+            
+            // SmartLEDs.setPixelColor() takes RGB values, from 0,0,0 up to 255,255,255
+            SmartLEDs.setPixelColor(0,SmartLEDs.Color(255,0,0));  // Red
+            SmartLEDs.show();
+            delay(500);            
+            LEDstep = 1;
+            break;
+          }
+          case 1:
+          {
+            
+            // SmartLEDs.setPixelColor() takes RGB values, from 0,0,0 up to 255,255,255
+            SmartLEDs.setPixelColor(0,SmartLEDs.Color(255,127,0));  // orange
+            SmartLEDs.show();
+            delay(500);
+            LEDstep = 2;
+            break;
+          }
+          case 2:
+          {
+            
+            // SmartLEDs.setPixelColor() takes RGB values, from 0,0,0 up to 255,255,255
+            SmartLEDs.setPixelColor(0,SmartLEDs.Color(255,255,0));  // yellow
+            SmartLEDs.show();
+            delay(500);
+            LEDstep = 3;
+            break;
+          }
+          case 3:
+          {
+            // SmartLEDs.setPixelColor() takes RGB values, from 0,0,0 up to 255,255,255
+            SmartLEDs.setPixelColor(0,SmartLEDs.Color(0,255,0));  // green
+            SmartLEDs.show();
+            delay(500);
+            LEDstep = 4;
+            break;
+          }
+          case 4:
+          {
+            // SmartLEDs.set PixelColor() takes RGB values, from 0,0,0 up to 255,255,255
+            SmartLEDs.setPixelColor(0,SmartLEDs.Color(0,0,255)); //blue
+            SmartLEDs.show();
+            delay(500);
+            LEDstep = 5;
+            break;
+          }
+          case 5:
+          {
+            // SmartLEDs.set PixelColor() takes RGB values, from 0,0,0 up to 255,255,255
+            SmartLEDs.setPixelColor(0,SmartLEDs.Color(127,0,255)); //purple
+            SmartLEDs.show();
+            delay(500);
+            LEDstep = 6;
+            break;
+          }
+          case 6:
+          {
+            // SmartLEDs.set PixelColor() takes RGB values, from 0,0,0 up to 255,255,255
+            SmartLEDs.setPixelColor(0,SmartLEDs.Color(0,0,0)); //off
+            SmartLEDs.show();
+            break;
+          }
+        }
       break;
   }
-
+  
 }
