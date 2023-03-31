@@ -24,25 +24,25 @@ void setup() {
   pinMode(45, OUTPUT); //right backwards (black, bottom of driver)
   pinMode(35, OUTPUT); //rear arm extend (red)
   pinMode(36, OUTPUT); //rear arm retract (brown)
-  pinMode(37, OUTPUT); //track forwards
-  pinMode(38, OUTPUT); //track backwards
+  pinMode(37, OUTPUT); //track forwards (green)
+  pinMode(38, OUTPUT); //track backwards (white)
   pinMode(39, OUTPUT);    //lock?
   pinMode(40, OUTPUT);    //unlock?
   pinMode(41, OUTPUT); //front arm down
   pinMode(42, OUTPUT); //front arm up
-  pinMode(2, OUTPUT);  //front arm extend
-  pinMode(1, OUTPUT);  //front arm retract
-  pinMode(trigF, OUTPUT); //Sets the trigPin as an Output
-  pinMode(echoF, INPUT); //Sets the echoPin as an Input
-  pinMode(trigB, OUTPUT); //Sets the trigPin as an Output
-  pinMode(echoB, INPUT); //Sets the echoPin as an Input
+  pinMode(2, OUTPUT);  //front arm extend (red)
+  pinMode(1, OUTPUT);  //front arm retract (brown)
+  pinMode(trigF, OUTPUT); 
+  pinMode(echoF, INPUT); 
+  pinMode(trigB, OUTPUT); 
+  pinMode(echoB, INPUT); 
 }
 
 void loop() {
   
-  switch(step){
+  switch(step){ //*** = not finished yet
 
-//move to edge and stop
+//move to edge and stop - GOOD
 case 0:    
    // Clears the trigPin
       digitalWrite(trigF, LOW);
@@ -60,22 +60,22 @@ case 0:
         digitalWrite(21, HIGH);
         digitalWrite(48, HIGH);
 
-      if (distance >= 5){
+      if (distance >= 7){
         digitalWrite(21, LOW);
         digitalWrite(48, LOW);
         step = 1;
       }
       break;
 
-      //extend front arm
+      //***extend front arm
       case 1:
       digitalWrite(2, HIGH);
-      delay(1); //need to time extending time
+      delay(1); //5500
       digitalWrite(2, LOW);
       step = 2;
       break;
 
-      //rotate front arm to table
+      //***rotate front arm to table (change depending on what kind of motor we use)
       case 2:
       digitalWrite(41, HIGH);
       delay(1); //need to time
@@ -83,15 +83,15 @@ case 0:
       step = 3;
       break;
 
-      //extend back wheels
+      //extend back wheels - GOOD
       case 3:
       digitalWrite(35, HIGH);
-      delay(4000);
+      delay(8000);
       digitalWrite(35, LOW);
       step = 4;
       break;
 
-      //front arm pull
+      //front arm pull forwards - GOOD
       case 4:
       digitalWrite(trigB, LOW);
       delayMicroseconds(2);
@@ -113,23 +113,23 @@ case 0:
       }
       break;
 
-      //pull back wheels up      
+      //pull back wheels up  - GOOD     
       case 5:
       digitalWrite(36, HIGH);
-      delay(4000);
+      delay(8000);
       digitalWrite(36, LOW);
       step = 6;
       break;
 
-      //retract front arm
+      //***retract front arm
       case 6:
       digitalWrite(1, HIGH);
-      delay(1); //need to time extending time
+      delay(1); //5000
       digitalWrite(1, LOW);
       step = 7;
       break;
 
-      //arm rotate back to stating position
+      //***arm rotate back to stating position (change depending on what kind of motor we use)
       case 7:
       digitalWrite(42, HIGH);
       delay(1); //need to time
@@ -137,7 +137,7 @@ case 0:
       step = 8;
       break;
 
-      //drive forwards till edge
+      //drive forwards till edge - GOOD
       case 8:
       digitalWrite(trigF, LOW);
       delayMicroseconds(2);
@@ -161,15 +161,15 @@ case 0:
       }
       break;
 
-      //drive backwards
+      //***drive backwards
       case 9:
       digitalWrite(45, HIGH);
-      delay(1); //need to time
+      delay(5000); //need to time, this is placeholder for testing
       digitalWrite(45, LOW);
       step = 10;
       break;
 
-      //flash led
+      //flash led - GOOD
       case 10:
       switch(LEDstep)
         {
