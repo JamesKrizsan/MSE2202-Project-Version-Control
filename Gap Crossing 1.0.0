@@ -4,6 +4,7 @@
 #define echoF 4 //yellow
 #define trigB 7
 #define echoB 6
+#define MODE_BUTTON         0 
 
 Adafruit_NeoPixel SmartLEDs(1, 21, NEO_RGB + NEO_KHZ800);
 const int stepsPerRevolution = 2038;
@@ -12,37 +13,135 @@ int LEDstep;
 int duration;
 int distance;
 
+unsigned int  ui_Robot_Mode_Index = 0; 
+unsigned int ui_Mode_PB_Debounce;
+unsigned long ul_3_Second_timer = 0;                                          // 3 second timer count in milliseconds
+unsigned long ul_2_Second_timer = 0;                                          // 2 second timer count in milliseconds
+unsigned long ul_200_mS_timer = 0;                                            // 200 millisecond timer count in milliseconds
+unsigned long ul_Display_Time;                                                // Heartbeat LED update timer
+unsigned long ul_Previous_Micros;                                             // Last microsecond count
+unsigned long ul_Current_Micros;                                              // Current microsecond count
+boolean bt_3_S_Time_Up = false;                                               // 3 second timer elapsed flag
+boolean bt_2_S_Time_Up = false;                                               // 2 second timer elapsed flag
+boolean bt_200_mS_Time_Up = false;
 
 void setup() {
+  
+  pinMode(MODE_BUTTON, INPUT_PULLUP);
+  ui_Mode_PB_Debounce = 0;
+  
   step = 0;
   LEDstep = 0;
 
 //pins from left to right
+  
   pinMode(21, OUTPUT); //left forwards (yellow, top of driver)
   pinMode(47, OUTPUT); //left backwards (light orange)
   pinMode(48, OUTPUT); //right forwards (dark orange)
   pinMode(45, OUTPUT); //right backwards (black, bottom of driver)
   pinMode(35, OUTPUT); //rear arm extend (red)
   pinMode(36, OUTPUT); //rear arm retract (brown)
-  pinMode(37, OUTPUT); //track forwards (green)
-  pinMode(38, OUTPUT); //track backwards (white)
+  pinMode(37, OUTPUT); //track forwards
+  pinMode(38, OUTPUT); //track backwards
   pinMode(39, OUTPUT);    //lock?
   pinMode(40, OUTPUT);    //unlock?
   pinMode(41, OUTPUT); //front arm down
   pinMode(42, OUTPUT); //front arm up
-  pinMode(2, OUTPUT);  //front arm extend (red)
-  pinMode(1, OUTPUT);  //front arm retract (brown)
-  pinMode(trigF, OUTPUT); 
-  pinMode(echoF, INPUT); 
-  pinMode(trigB, OUTPUT); 
-  pinMode(echoB, INPUT); 
+  pinMode(2, OUTPUT);  //front arm extend
+  pinMode(1, OUTPUT);  //front arm retract
+  pinMode(trigF, OUTPUT); //Sets the trigPin as an Output
+  pinMode(echoF, INPUT); //Sets the echoPin as an Input
+  pinMode(trigB, OUTPUT); //Sets the trigPin as an Output
+  pinMode(echoB, INPUT); //Sets the echoPin as an Input
 }
 
 void loop() {
-  
-  switch(step){ //*** = not finished yet
 
-//move to edge and stop - GOOD
+
+
+
+
+
+ul_Current_Micros = micros();                                              // Get current time in microseconds
+   
+      ul_Previous_Micros = ul_Current_Micros;                                 // Record current time in microseconds
+
+      // 3 second timer, counts 3000 milliseconds
+      ul_3_Second_timer = ul_3_Second_timer + 1;                              // Increment 3 second timer count
+      if(ul_3_Second_timer > 3000)                                            // If 3 seconds have elapsed
+      {
+         ul_3_Second_timer = 0;                                               // Reset 3 second timer count
+         bt_3_S_Time_Up = true;                                               // Indicate that 3 seconds have elapsed
+      }
+   
+      // 2 second timer, counts 2000 milliseconds
+      ul_2_Second_timer = ul_2_Second_timer + 1;                              // Increment 2 second timer count
+      if(ul_2_Second_timer > 2000)                                            // If 2 seconds have elapsed
+      {
+         ul_2_Second_timer = 0;                                               // Reset 2 second timer count
+         bt_2_S_Time_Up = true;                                               // Indicate that 2 seconds have elapsed
+      }
+   
+      // 200 millisecond timer, counts 200 milliseconds
+      ul_200_mS_timer = ul_200_mS_timer + 1;                                  // Increment 200 millisecond timer count
+      if(ul_200_mS_timer > 200)                                               // If 200 milliseconds have elapsed
+      {
+         ul_200_mS_timer = 0;                                                 // Reset 200 millisecond timer count
+         bt_200_mS_Time_Up = true;                                            // Indicate that 200 milliseconds have elapsed
+      }
+
+      // Mode pushbutton debounce and toggle
+      if(!digitalRead(MODE_BUTTON))                                           // If pushbutton GPIO goes LOW (nominal push)
+      {
+         // Start debounce
+         if(ui_Mode_PB_Debounce <= 25)                                        // 25 millisecond debounce time
+         {
+            ui_Mode_PB_Debounce = ui_Mode_PB_Debounce + 1;                    // Increment debounce timer count
+            if(ui_Mode_PB_Debounce > 25)                                      // If held for at least 25 mS
+            {
+               ui_Mode_PB_Debounce = 1000;                                    // Change debounce timer count to 1 second
+            }
+         }
+         if(ui_Mode_PB_Debounce >= 1000)                                      // Maintain 1 second timer count until release
+         {
+            ui_Mode_PB_Debounce = 1000;
+         }
+      }
+      else                                                                    // Pushbutton GPIO goes HIGH (nominal release)
+      {
+         if(ui_Mode_PB_Debounce <= 26)                                        // If release occurs within debounce interval
+         {
+            ui_Mode_PB_Debounce = 0;                                          // Reset debounce timer count
+         }
+         else
+         {
+            ui_Mode_PB_Debounce = ui_Mode_PB_Debounce + 1;                    // Increment debounce timer count
+            if(ui_Mode_PB_Debounce >= 1025)                                   // If pushbutton was released for 25 mS
+            {
+               ui_Mode_PB_Debounce = 0;                                       // Reset debounce timer count
+               ui_Robot_Mode_Index++;                                         // Switch to next mode
+               ui_Robot_Mode_Index = ui_Robot_Mode_Index & 7;                 // Keep mode index between 0 and 7
+               ul_3_Second_timer = 0;                                         // Reset 3 second timer count
+               bt_3_S_Time_Up = false;                                        // Reset 3 second timer         
+            }
+         }
+      }
+
+
+
+
+
+
+
+
+
+
+
+if(ui_Robot_Mode_Index=1){
+  
+  switch(step){
+
+//move to edge and stop
 case 0:    
    // Clears the trigPin
       digitalWrite(trigF, LOW);
@@ -60,22 +159,22 @@ case 0:
         digitalWrite(21, HIGH);
         digitalWrite(48, HIGH);
 
-      if (distance >= 7){
+      if (distance >= 5){
         digitalWrite(21, LOW);
         digitalWrite(48, LOW);
         step = 1;
       }
       break;
 
-      //***extend front arm
+      //extend front arm
       case 1:
       digitalWrite(2, HIGH);
-      delay(1); //5500
+      delay(1); //need to time extending time
       digitalWrite(2, LOW);
       step = 2;
       break;
 
-      //***rotate front arm to table (change depending on what kind of motor we use)
+      //rotate front arm to table
       case 2:
       digitalWrite(41, HIGH);
       delay(1); //need to time
@@ -83,15 +182,15 @@ case 0:
       step = 3;
       break;
 
-      //extend back wheels - GOOD
+      //extend back wheels
       case 3:
       digitalWrite(35, HIGH);
-      delay(8000);
+      delay(4000);
       digitalWrite(35, LOW);
       step = 4;
       break;
 
-      //front arm pull forwards - GOOD
+      //front arm pull
       case 4:
       digitalWrite(trigB, LOW);
       delayMicroseconds(2);
@@ -113,23 +212,23 @@ case 0:
       }
       break;
 
-      //pull back wheels up  - GOOD     
+      //pull back wheels up      
       case 5:
       digitalWrite(36, HIGH);
-      delay(8000);
+      delay(4000);
       digitalWrite(36, LOW);
       step = 6;
       break;
 
-      //***retract front arm
+      //retract front arm
       case 6:
       digitalWrite(1, HIGH);
-      delay(1); //5000
+      delay(1); //need to time extending time
       digitalWrite(1, LOW);
       step = 7;
       break;
 
-      //***arm rotate back to stating position (change depending on what kind of motor we use)
+      //arm rotate back to stating position
       case 7:
       digitalWrite(42, HIGH);
       delay(1); //need to time
@@ -137,7 +236,7 @@ case 0:
       step = 8;
       break;
 
-      //drive forwards till edge - GOOD
+      //drive forwards till edge
       case 8:
       digitalWrite(trigF, LOW);
       delayMicroseconds(2);
@@ -161,15 +260,15 @@ case 0:
       }
       break;
 
-      //***drive backwards
+      //drive backwards
       case 9:
       digitalWrite(45, HIGH);
-      delay(5000); //need to time, this is placeholder for testing
+      delay(1); //need to time
       digitalWrite(45, LOW);
       step = 10;
       break;
 
-      //flash led - GOOD
+      //flash led
       case 10:
       switch(LEDstep)
         {
@@ -240,5 +339,5 @@ case 0:
         }
       break;
   }
-  
+}
 }
