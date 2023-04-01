@@ -4,15 +4,18 @@
 #define echoF 4 //yellow
 #define trigB 7
 #define echoB 6
-#define MODE_BUTTON         0 
+
 
 Adafruit_NeoPixel SmartLEDs(1, 21, NEO_RGB + NEO_KHZ800);
 const int stepsPerRevolution = 2038;
+const int buttonPin = 0;
 int step;
 int LEDstep;
 int duration;
 int distance;
 
+int buttonPress;
+/*
 unsigned int  ui_Robot_Mode_Index = 0; 
 unsigned int ui_Mode_PB_Debounce;
 unsigned long ul_3_Second_timer = 0;                                          // 3 second timer count in milliseconds
@@ -24,11 +27,15 @@ unsigned long ul_Current_Micros;                                              //
 boolean bt_3_S_Time_Up = false;                                               // 3 second timer elapsed flag
 boolean bt_2_S_Time_Up = false;                                               // 2 second timer elapsed flag
 boolean bt_200_mS_Time_Up = false;
-
+*/
 void setup() {
-  
+  /*
   pinMode(MODE_BUTTON, INPUT_PULLUP);
   ui_Mode_PB_Debounce = 0;
+  */
+
+pinMode(buttonPin, INPUT_PULLUP);
+
   
   step = 0;
   LEDstep = 0;
@@ -61,7 +68,7 @@ void loop() {
 
 
 
-
+/*
 ul_Current_Micros = micros();                                              // Get current time in microseconds
    
       ul_Previous_Micros = ul_Current_Micros;                                 // Record current time in microseconds
@@ -134,10 +141,15 @@ ul_Current_Micros = micros();                                              // Ge
 
 
 
+*/
+
+if (digitalRead(buttonPin) == LOW) {
+  buttonPress=1;
+}
 
 
 
-if(ui_Robot_Mode_Index=1){
+if(buttonPress=1){
   
   switch(step){
 
