@@ -1,161 +1,191 @@
+#include <ESP32Servo.h>
+#include <analogWrite.h>
+#include <ESP32Tone.h>
+#include <ESP32PWM.h>
+
 #include <Adafruit_NeoPixel.h>
 
-#define trigF 5 //orange
-#define echoF 4 //yellow
+#define trigF 5 
+#define echoF 4 
 #define trigB 7
 #define echoB 6
 
-
+Servo myservo;  
 Adafruit_NeoPixel SmartLEDs(1, 21, NEO_RGB + NEO_KHZ800);
 const int stepsPerRevolution = 2038;
-const int buttonPin = 0;
-int step;
-int LEDstep;
+int pos;
 int duration;
 int distance;
+int step = 1;
+int LEDstep = 0;
 
-int buttonPress;
-/*
-unsigned int  ui_Robot_Mode_Index = 0; 
-unsigned int ui_Mode_PB_Debounce;
-unsigned long ul_3_Second_timer = 0;                                          // 3 second timer count in milliseconds
-unsigned long ul_2_Second_timer = 0;                                          // 2 second timer count in milliseconds
-unsigned long ul_200_mS_timer = 0;                                            // 200 millisecond timer count in milliseconds
-unsigned long ul_Display_Time;                                                // Heartbeat LED update timer
-unsigned long ul_Previous_Micros;                                             // Last microsecond count
-unsigned long ul_Current_Micros;                                              // Current microsecond count
-boolean bt_3_S_Time_Up = false;                                               // 3 second timer elapsed flag
-boolean bt_2_S_Time_Up = false;                                               // 2 second timer elapsed flag
-boolean bt_200_mS_Time_Up = false;
-*/
 void setup() {
-  /*
-  pinMode(MODE_BUTTON, INPUT_PULLUP);
-  ui_Mode_PB_Debounce = 0;
-  */
+  pos = 0;
+  myservo.attach(15); //servo 
+  myservo.write(pos); // start servo in up position (all the way down is 180)
 
-pinMode(buttonPin, INPUT_PULLUP);
-
-  
-  step = 0;
-  LEDstep = 0;
-
+  pinMode(0, INPUT); //button
 //pins from left to right
-  
   pinMode(21, OUTPUT); //left forwards (yellow, top of driver)
   pinMode(47, OUTPUT); //left backwards (light orange)
   pinMode(48, OUTPUT); //right forwards (dark orange)
-  pinMode(45, OUTPUT); //right backwards (black, bottom of driver)
-  pinMode(35, OUTPUT); //rear arm extend (red)
+  pinMode(45, OUTPUT); //right backwards (black, bottom of driver 1)
+  pinMode(35, OUTPUT); //rear arm extend (red, own driver)
   pinMode(36, OUTPUT); //rear arm retract (brown)
-  pinMode(37, OUTPUT); //track forwards
-  pinMode(38, OUTPUT); //track backwards
-  pinMode(39, OUTPUT);    //lock?
-  pinMode(40, OUTPUT);    //unlock?
-  pinMode(41, OUTPUT); //front arm down
-  pinMode(42, OUTPUT); //front arm up
-  pinMode(2, OUTPUT);  //front arm extend
-  pinMode(1, OUTPUT);  //front arm retract
-  pinMode(trigF, OUTPUT); //Sets the trigPin as an Output
-  pinMode(echoF, INPUT); //Sets the echoPin as an Input
-  pinMode(trigB, OUTPUT); //Sets the trigPin as an Output
-  pinMode(echoB, INPUT); //Sets the echoPin as an Input
+  pinMode(37, OUTPUT); //track forwards (green, top of driver)
+  pinMode(38, OUTPUT); //track backwards (yellow)
+  pinMode(39, OUTPUT); //front arm extend (red)
+  pinMode(40, OUTPUT); //front arm retract (brown, bottom of driver 2)
+  pinMode(41, OUTPUT); //
+  pinMode(42, OUTPUT); //
+  pinMode(2, OUTPUT);  //.
+  pinMode(1, OUTPUT);  //
+  pinMode(trigF, OUTPUT); //orange 5
+  pinMode(echoF, INPUT);  //yellow 4
+  pinMode(trigB, OUTPUT); // 7
+  pinMode(echoB, INPUT);  // 6
 }
 
 void loop() {
-
-
-
-
-
-/*
-ul_Current_Micros = micros();                                              // Get current time in microseconds
-   
-      ul_Previous_Micros = ul_Current_Micros;                                 // Record current time in microseconds
-
-      // 3 second timer, counts 3000 milliseconds
-      ul_3_Second_timer = ul_3_Second_timer + 1;                              // Increment 3 second timer count
-      if(ul_3_Second_timer > 3000)                                            // If 3 seconds have elapsed
-      {
-         ul_3_Second_timer = 0;                                               // Reset 3 second timer count
-         bt_3_S_Time_Up = true;                                               // Indicate that 3 seconds have elapsed
-      }
-   
-      // 2 second timer, counts 2000 milliseconds
-      ul_2_Second_timer = ul_2_Second_timer + 1;                              // Increment 2 second timer count
-      if(ul_2_Second_timer > 2000)                                            // If 2 seconds have elapsed
-      {
-         ul_2_Second_timer = 0;                                               // Reset 2 second timer count
-         bt_2_S_Time_Up = true;                                               // Indicate that 2 seconds have elapsed
-      }
-   
-      // 200 millisecond timer, counts 200 milliseconds
-      ul_200_mS_timer = ul_200_mS_timer + 1;                                  // Increment 200 millisecond timer count
-      if(ul_200_mS_timer > 200)                                               // If 200 milliseconds have elapsed
-      {
-         ul_200_mS_timer = 0;                                                 // Reset 200 millisecond timer count
-         bt_200_mS_Time_Up = true;                                            // Indicate that 200 milliseconds have elapsed
-      }
-
-      // Mode pushbutton debounce and toggle
-      if(!digitalRead(MODE_BUTTON))                                           // If pushbutton GPIO goes LOW (nominal push)
-      {
-         // Start debounce
-         if(ui_Mode_PB_Debounce <= 25)                                        // 25 millisecond debounce time
-         {
-            ui_Mode_PB_Debounce = ui_Mode_PB_Debounce + 1;                    // Increment debounce timer count
-            if(ui_Mode_PB_Debounce > 25)                                      // If held for at least 25 mS
-            {
-               ui_Mode_PB_Debounce = 1000;                                    // Change debounce timer count to 1 second
-            }
-         }
-         if(ui_Mode_PB_Debounce >= 1000)                                      // Maintain 1 second timer count until release
-         {
-            ui_Mode_PB_Debounce = 1000;
-         }
-      }
-      else                                                                    // Pushbutton GPIO goes HIGH (nominal release)
-      {
-         if(ui_Mode_PB_Debounce <= 26)                                        // If release occurs within debounce interval
-         {
-            ui_Mode_PB_Debounce = 0;                                          // Reset debounce timer count
-         }
-         else
-         {
-            ui_Mode_PB_Debounce = ui_Mode_PB_Debounce + 1;                    // Increment debounce timer count
-            if(ui_Mode_PB_Debounce >= 1025)                                   // If pushbutton was released for 25 mS
-            {
-               ui_Mode_PB_Debounce = 0;                                       // Reset debounce timer count
-               ui_Robot_Mode_Index++;                                         // Switch to next mode
-               ui_Robot_Mode_Index = ui_Robot_Mode_Index & 7;                 // Keep mode index between 0 and 7
-               ul_3_Second_timer = 0;                                         // Reset 3 second timer count
-               bt_3_S_Time_Up = false;                                        // Reset 3 second timer         
-            }
-         }
-      }
-
-
-
-
-
-
-
-
-*/
-
-if (digitalRead(buttonPin) == LOW) {
-  buttonPress=1;
-}
-
-
-
-if(buttonPress=1){
   
-  switch(step){
+  switch(step){ //*** = not finished yet
 
-//move to edge and stop
-case 0:    
-   // Clears the trigPin
+    //***button start
+    case 0:
+      delay(100);
+      if (digitalRead(0) == HIGH) {
+      step = 1;
+      }
+    break;
+
+    //move to edge and stop - GOOD
+    case 1:    
+      Serial.println("step 1 forwards");
+      // Clears the trigPin
+      digitalWrite(trigF, LOW);
+      delayMicroseconds(2);
+      // Sets the trigPin on HIGH state for 10 micro seconds
+      digitalWrite(trigF, HIGH);
+      delayMicroseconds(10);
+      digitalWrite(trigF, LOW);
+      // Reads the echoPin, returns the sound wave travel time in microseconds
+      duration = pulseIn(echoF, HIGH);
+      // Calculating the distance
+      distance= duration*0.034/2;
+      Serial.println(distance);
+
+      digitalWrite(21, HIGH);
+      digitalWrite(48, HIGH);
+
+      if (distance >= 10){
+        digitalWrite(21, LOW);
+        digitalWrite(48, LOW);
+        step = 2;
+      }
+    break;
+
+    //extend front arm - GOOD
+    case 2:
+      Serial.println("step 2 extend front");
+      digitalWrite(39, HIGH);
+      delay(2800); //5000 full
+      digitalWrite(39, LOW);
+      step = 3;
+    break;
+
+    //rotate front arm to table - GOOD
+    case 3:
+    Serial.println("step 3 rotate arm");
+      for (pos; pos <= 180; pos += 1) {
+        // in steps of 1 degree
+        myservo.write(pos);              
+        delay(15);                
+      }
+      step = 4;
+    break;
+
+    //extend back wheels - GOOD
+    case 4:
+      Serial.println("step 4 extend back (need far distance from back sensor for next step)");
+      digitalWrite(35, HIGH);
+      delay(6000); //8000
+      digitalWrite(35, LOW);
+      step = 5;
+    break;
+
+    //front arm pull forwards - GOOD
+    case 5:
+      Serial.println("step 5 front arm pull");
+      digitalWrite(trigB, LOW);
+      delayMicroseconds(2);
+      // Sets the trigPin on HIGH state for 10 micro seconds
+      digitalWrite(trigB, HIGH);
+      delayMicroseconds(10);
+      digitalWrite(trigB, LOW);
+      // Reads the echoPin, returns the sound wave travel time in microseconds
+      duration = pulseIn(echoB, HIGH);
+      // Calculating the distance
+      distance= duration*0.034/2;
+      Serial.println(distance);
+
+      //arm
+      digitalWrite(37, HIGH);
+      //drive
+      delay(2000);
+      digitalWrite(21, HIGH);
+      digitalWrite(48, HIGH);
+      delay(5000);
+
+      //if(distance <= 3){
+        digitalWrite(37, LOW);
+        digitalWrite(21, LOW);
+        digitalWrite(48, LOW);
+        step = 6;
+       //}
+    break;
+
+    //pull back wheels up  - GOOD     
+    case 6:
+      Serial.println("step 6 back wheels up");
+      digitalWrite(36, HIGH);
+      delay(6000);
+      digitalWrite(36, LOW);
+        
+        //move forwards a bit
+        digitalWrite(21, HIGH);
+        digitalWrite(48, HIGH);
+        digitalWrite(37, HIGH);
+        delay(5000);
+        digitalWrite(37, LOW);
+        digitalWrite(21, LOW);
+        digitalWrite(48, LOW);
+
+      step = 7;
+    break;
+
+    //retract front arm - GOOD (might need retime);
+    case 7:
+      Serial.println("step 7 front arm retract");
+      digitalWrite(40, HIGH);
+      delay(2800);
+      digitalWrite(40, LOW);
+      step = 8;
+    break;
+
+    //arm rotate back to stating position - GOOD
+    case 8:
+    Serial.println("step 8 rotate arm back");
+      for (pos; pos >= 10; pos -= 1) {
+        // in steps of 1 degree
+        myservo.write(pos);              
+        delay(22);                
+      }
+      step = 9;
+    break;
+
+    //drive forwards till edge - GOOD
+    case 9:
+      Serial.println("step 9 forwards");
       digitalWrite(trigF, LOW);
       delayMicroseconds(2);
       // Sets the trigPin on HIGH state for 10 micro seconds
@@ -171,117 +201,27 @@ case 0:
         digitalWrite(21, HIGH);
         digitalWrite(48, HIGH);
 
-      if (distance >= 5){
+      if (distance >= 10){
         digitalWrite(21, LOW);
         digitalWrite(48, LOW);
-        step = 1;
+        step = 10;
       }
-      break;
+    break;
 
-      //extend front arm
-      case 1:
-      digitalWrite(2, HIGH);
-      delay(1); //need to time extending time
-      digitalWrite(2, LOW);
-      step = 2;
-      break;
-
-      //rotate front arm to table
-      case 2:
-      digitalWrite(41, HIGH);
-      delay(1); //need to time
-      digitalWrite(41, LOW);
-      step = 3;
-      break;
-
-      //extend back wheels
-      case 3:
-      digitalWrite(35, HIGH);
-      delay(4000);
-      digitalWrite(35, LOW);
-      step = 4;
-      break;
-
-      //front arm pull
-      case 4:
-      digitalWrite(trigB, LOW);
-      delayMicroseconds(2);
-      // Sets the trigPin on HIGH state for 10 micro seconds
-      digitalWrite(trigB, HIGH);
-      delayMicroseconds(10);
-      digitalWrite(trigB, LOW);
-      // Reads the echoPin, returns the sound wave travel time in microseconds
-      duration = pulseIn(echoB, HIGH);
-      // Calculating the distance
-      distance= duration*0.034/2;
-      Serial.println(distance);
-
-
-      digitalWrite(37, HIGH);
-      if(distance <= 5){
-        digitalWrite(37, LOW);
-      step = 5;
-      }
-      break;
-
-      //pull back wheels up      
-      case 5:
-      digitalWrite(36, HIGH);
-      delay(4000);
-      digitalWrite(36, LOW);
-      step = 6;
-      break;
-
-      //retract front arm
-      case 6:
-      digitalWrite(1, HIGH);
-      delay(1); //need to time extending time
-      digitalWrite(1, LOW);
-      step = 7;
-      break;
-
-      //arm rotate back to stating position
-      case 7:
-      digitalWrite(42, HIGH);
-      delay(1); //need to time
-      digitalWrite(42, LOW);
-      step = 8;
-      break;
-
-      //drive forwards till edge
-      case 8:
-      digitalWrite(trigF, LOW);
-      delayMicroseconds(2);
-      // Sets the trigPin on HIGH state for 10 micro seconds
-      digitalWrite(trigF, HIGH);
-      delayMicroseconds(10);
-      digitalWrite(trigF, LOW);
-      // Reads the echoPin, returns the sound wave travel time in microseconds
-      duration = pulseIn(echoF, HIGH);
-      // Calculating the distance
-      distance= duration*0.034/2;
-      Serial.println(distance);
-
-      if(distance <= 5){
-        digitalWrite(48, HIGH);
-      }
-
-      if (distance >= 5){
-        digitalWrite(48, LOW);
-        step = 9;
-      }
-      break;
-
-      //drive backwards
-      case 9:
+    //***drive backwards
+    case 10:
+      Serial.println("step 10 back");
+      digitalWrite(47, HIGH);
       digitalWrite(45, HIGH);
-      delay(1); //need to time
+      delay(2500); //need to time, this is placeholder for testing
+      digitalWrite(47, LOW);
       digitalWrite(45, LOW);
-      step = 10;
-      break;
+      step = 11;
+    break;
 
-      //flash led
-      case 10:
+    //flash led - GOOD
+    case 11:
+      Serial.println("step 11 lights");
       switch(LEDstep)
         {
           case 0:
@@ -349,7 +289,7 @@ case 0:
             break;
           }
         }
-      break;
+    break;
   }
-}
+  
 }
